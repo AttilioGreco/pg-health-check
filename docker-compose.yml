@@ -1,0 +1,101 @@
+services:
+  pg-data-1:
+    image: postgres:15-alpine
+    container_name: pg-healtcheck-pg-data-1
+    command: postgres -c log_connections=yes -c max_wal_size=2GB
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+      # Use just in initialization script
+      POSTGRES_MASTER_HOST: pg-data-1
+      POSTGRES_MASTER_PORT: 5432
+    volumes:
+      - ./infra/pgsql-1/initdb:/docker-entrypoint-initdb.d
+      #- ./infra/config/pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
+      - pg-data-1:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    networks:
+      - postgres-network
+    healthcheck:
+      test: ["CMD", "bash", "-c", "echo -e '\x1dclose\x0d' | nc -z localhost 5432"]
+      interval: 3s
+      timeout: 5s
+      retries: 40
+
+  pg-data-2:
+    depends_on:
+      pg-data-1:
+        condition: service_healthy
+    image: postgres:15-alpine
+    container_name: pg-healtcheck-pg-data-2
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: postgres
+    entrypoint: su -c "/scripts/seup-follower.sh" postgres
+    volumes:
+      - pg-data-2:/var/lib/postgresql/data
+      - ./infra/pgsql-2/script/seup-follower.sh:/scripts/seup-follower.sh
+    ports:
+      - "5433:5432"
+    networks:
+      - postgres-network
+
+  pg_benckmark:
+    depends_on:
+      pg-data-1:
+        condition: service_healthy
+    image: postgres:15-alpine
+    container_name: pg-healtcheck-pg-benckmark
+    healthcheck:
+      test: ["CMD", "bash", "-c", "[ -f /tmp/script.end ]"]
+      interval: 2s
+      timeout: 5s
+      retries: 90
+    environment:
+      PG_BEBCHMARK_USER: benckmark
+      PG_BEBCHMARK_PASSWORD: benckmark
+      PG_BEBCHMARK_DB: benckmark
+      DB_HOST: pg-data-1
+      DB_PORT: 5432
+    # entrypoint: /bin/bash -c "sleep 3600"
+    entrypoint: /bin/bash -c "/scripts/pg_bench.sh"
+    # command: /scripts/pg_bench.sh
+    volumes:
+      - ./infra/pg_bench/:/scripts/
+    networks:
+      - postgres-network
+
+  pg-healtcheck-1:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: pg-healtcheck-1
+    depends_on:
+      pg-data-1:
+        condition: service_healthy
+    volumes:
+      - ./infra/config/pg-healtcheck-1.yaml:/etc/pg-health-check/config.yaml
+    ports:
+      - "8081:8080"
+  pg-healtcheck-2:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: pg-healtcheck-2
+    depends_on:
+      pg-data-1:
+        condition: service_healthy
+    volumes:
+      - ./infra/config/pg-healtcheck-2.yaml:/etc/pg-health-check/config.yaml
+    ports:
+      - "8082:8080"
+
+volumes:
+  pg-data-1:
+  pg-data-2:
+
+networks:
+  postgres-network:
