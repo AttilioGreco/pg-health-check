@@ -15,7 +15,10 @@ services:
       #- ./infra/config/pg_hba.conf:/var/lib/postgresql/data/pg_hba.conf
       - pg-data-1:/var/lib/postgresql/data
     ports:
-      - "5432:5432"
+      # - "5432:5432"
+      # pg-health-check-1 Port Forwarding
+      # network_mode: "service:..." is samting like k8s sidecar
+      - "8081:8080"
     networks:
       - postgres-network
     healthcheck:
@@ -23,6 +26,19 @@ services:
       interval: 3s
       timeout: 5s
       retries: 40
+
+  pg-healtcheck-1:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: pg-healtcheck-1
+    depends_on:
+      pg-data-1:
+        condition: service_healthy
+    volumes:
+      - ./infra/config/pg-healtcheck-1.yaml:/etc/pg-health-check/config.yaml
+
+    network_mode: "service:pg-data-1"
 
   pg-data-2:
     depends_on:
@@ -39,59 +55,77 @@ services:
       - pg-data-2:/var/lib/postgresql/data
       - ./infra/pgsql-2/script/seup-follower.sh:/scripts/seup-follower.sh
     ports:
-      - "5433:5432"
+      # - "5433:5432"
+      # pg-health-check-2 Port Forwarding
+      # network_mode: "service:..." is samting like k8s sidecar
+      - "8082:8080"
     networks:
       - postgres-network
-
-  pg_benckmark:
-    depends_on:
-      pg-data-1:
-        condition: service_healthy
-    image: postgres:15-alpine
-    container_name: pg-healtcheck-pg-benckmark
     healthcheck:
-      test: ["CMD", "bash", "-c", "[ -f /tmp/script.end ]"]
-      interval: 2s
+      test: ["CMD", "bash", "-c", "echo -e '\x1dclose\x0d' | nc -z localhost 5432"]
+      interval: 3s
       timeout: 5s
-      retries: 90
-    environment:
-      PG_BEBCHMARK_USER: benckmark
-      PG_BEBCHMARK_PASSWORD: benckmark
-      PG_BEBCHMARK_DB: benckmark
-      DB_HOST: pg-data-1
-      DB_PORT: 5432
-    # entrypoint: /bin/bash -c "sleep 3600"
-    entrypoint: /bin/bash -c "/scripts/pg_bench.sh"
-    # command: /scripts/pg_bench.sh
-    volumes:
-      - ./infra/pg_bench/:/scripts/
-    networks:
-      - postgres-network
+      retries: 40
 
-  pg-healtcheck-1:
-    build:
-      context: ./
-      dockerfile: Dockerfile
-    container_name: pg-healtcheck-1
-    depends_on:
-      pg-data-1:
-        condition: service_healthy
-    volumes:
-      - ./infra/config/pg-healtcheck-1.yaml:/etc/pg-health-check/config.yaml
-    ports:
-      - "8081:8080"
   pg-healtcheck-2:
     build:
       context: ./
       dockerfile: Dockerfile
     container_name: pg-healtcheck-2
     depends_on:
-      pg-data-1:
+      pg-data-2:
         condition: service_healthy
+    # command: /bin/sh -c "sleep 3600"
     volumes:
       - ./infra/config/pg-healtcheck-2.yaml:/etc/pg-health-check/config.yaml
+    network_mode: "service:pg-data-2"
+
+  haproxy:
+    depends_on:
+      pg-data-1:
+        condition: service_healthy
+      pg-data-2:
+        condition: service_healthy
+    image: haproxy:2.9-alpine
+    container_name: pg-healtcheck-haproxy
+    # command: ["haproxy", "-c", "-f", "/usr/local/etc/haproxy/haproxy.cfg"]
+    # command: ["sleep", "3600"]
+    volumes:
+      - ./infra/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
     ports:
-      - "8082:8080"
+      # DB Write
+      - "5435:5435"
+      # DB Read
+      - "5436:5436"
+      # stats
+      - 8085:8085
+    networks:
+      - postgres-network
+
+  # pg_benckmark:
+  #   depends_on:
+  #     pg-data-1:
+  #       condition: service_healthy
+  #   image: postgres:15-alpine
+  #   container_name: pg-healtcheck-pg-benckmark
+  #   healthcheck:
+  #     test: ["CMD", "bash", "-c", "[ -f /tmp/script.end ]"]
+  #     interval: 2s
+  #     timeout: 5s
+  #     retries: 90
+  #   environment:
+  #     PG_BEBCHMARK_USER: benckmark
+  #     PG_BEBCHMARK_PASSWORD: benckmark
+  #     PG_BEBCHMARK_DB: benckmark
+  #     DB_HOST: pg-data-1
+  #     DB_PORT: 5432
+  #   # entrypoint: /bin/bash -c "sleep 3600"
+  #   entrypoint: /bin/bash -c "/scripts/pg_bench.sh"
+  #   # command: /scripts/pg_bench.sh
+  #   volumes:
+  #     - ./infra/pg_bench/:/scripts/
+  #   networks:
+  #     - postgres-network
 
 volumes:
   pg-data-1:
