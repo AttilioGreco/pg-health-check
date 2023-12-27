@@ -32,7 +32,6 @@ func WriteHealthCheck(c *gin.Context) {
 func ReadHealthCheck(c *gin.Context) {
 	// Esegui un ping sul database
 	err := database.DB.Ping(context.Background())
-	log.Err(err).Msg("Error pinging database")
 	if err != nil {
 		log.Error().Err(err).Msg("Error pinging database")
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "503 Service Unavailable"})
