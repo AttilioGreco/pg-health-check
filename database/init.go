@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/rs/zerolog/log"
@@ -79,4 +80,47 @@ func InitDB() {
 
 func DBClose() {
 	DB.Close()
+}
+
+func CheckDB() bool {
+	var result bool
+
+	ctx := context.Background()
+	ctxWithTimeout, cancel := context.WithTimeout(ctx, 1*time.Second)
+
+	err := DB.QueryRow(ctxWithTimeout, "SELECT true").Scan(&result)
+	defer cancel()
+
+	select {
+	case <-time.After(5 * time.Second):
+		if err != nil {
+			log.Error().Msgf("Error checking DB: %v", err)
+			return false
+		}
+		return true
+
+	case <-ctx.Done():
+		log.Warn().Msg("Postgresql healch check Process timed out")
+		return false
+	}
+}
+
+func PgsqlCheckLoop(ctx context.Context) {
+	ticker := time.NewTicker(1 * time.Second)
+	for {
+		select {
+		case <-ctx.Done():
+			log.Info().Msg("PgsqlCheckLoop stopped")
+			ticker.Stop()
+
+		case <-ticker.C:
+			log.Info().Msg("PgsqlCheckLoop running")
+			if !CheckDB() {
+				log.Warn().Msg("DB is not responding, exiting...")
+				InitDB()
+			}
+
+		}
+	}
+
 }
