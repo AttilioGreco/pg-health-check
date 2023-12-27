@@ -88,8 +88,6 @@ services:
         condition: service_healthy
     image: haproxy:2.9-alpine
     container_name: pg-healtcheck-haproxy
-    # command: ["haproxy", "-c", "-f", "/usr/local/etc/haproxy/haproxy.cfg"]
-    # command: ["sleep", "3600"]
     volumes:
       - ./infra/haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
     ports:
