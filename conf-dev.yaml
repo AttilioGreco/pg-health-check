@@ -14,3 +14,12 @@ server:
   # debug
   # release
   mode: debug
+log:
+# collector, console, syslog
+  collector: console
+  level: info
+#  syslog:
+#    host:         # syslog server host
+#    local:        # local0 # available: local0, local1, local2, local3, local4, local5, local6, local7
+#    protocol: tcp # tcp, udp
+#    level: debug  # debug info warn error fatal panic

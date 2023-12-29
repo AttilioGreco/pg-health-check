@@ -27,6 +27,9 @@ type serverConfig struct {
 
 func Run(cmd *cobra.Command, args []string) {
 
+	logger := SetupLogger()
+	log.Logger = logger
+
 	var srvconf serverConfig
 	serverMap := viper.Sub("server")
 
