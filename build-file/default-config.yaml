@@ -8,7 +8,12 @@ postgres:
 server:
   port: 8080
   host: localhost
-  # allowed
-  # debug
-  # release
-  mode: debug
+  mode: release # debug, release set release for production
+log:
+  collector: stdout
+  level: info
+#  syslog:
+#    host:         # syslog server host
+#    local:        # local0 # available: local0, local1, local2, local3, local4, local5, local6, local7
+#    protocol: tcp # tcp, udp
+#    level: debug  # debug info warn error fatal panic

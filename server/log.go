@@ -19,6 +19,10 @@ func SetupLogger() zerolog.Logger {
 	var logger zerolog.Logger
 
 	logCollector := viper.Get("log.collector")
+	if logCollector == nil {
+		logCollector = "stdout"
+	}
+
 	log.Debug().Str("logCollector", logCollector.(string)).Msg("Log collector")
 
 	switch logCollector {
@@ -95,8 +99,9 @@ func SetupLogger() zerolog.Logger {
 			log.Debug().Msg("Using syslog logger")
 		}
 		// Configure zerolog to use syslog
+	case "stdout":
 	default:
-		logger = zerolog.New(os.Stderr).With().Timestamp().Logger()
+		logger = zerolog.New(os.Stdout).With().Timestamp().Logger()
 	}
 
 	logLevel := viper.Get("log.level")
