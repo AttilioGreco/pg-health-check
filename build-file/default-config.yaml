@@ -1,0 +1,14 @@
+---
+postgres:
+  host: localhost
+  port: 5433
+  user: postgres
+  password: postgres
+  dbname: postgres
+server:
+  port: 8080
+  host: localhost
+  # allowed
+  # debug
+  # release
+  mode: debug

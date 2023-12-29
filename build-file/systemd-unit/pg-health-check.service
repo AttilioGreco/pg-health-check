@@ -1,0 +1,13 @@
+[Unit]
+Description=PostgreSQL Health Check Server
+After=network.target
+
+[Service]
+WorkingDirectory=/var/lib/pg-health-check
+ExecStart=/usr/bin/pg-health-check -c /etc/pg-health-check/config.yaml
+User=pg-health-check
+Group=pg-health-check
+Restart=always
+
+[Install]
+WantedBy=default.target
