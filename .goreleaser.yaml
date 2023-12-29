@@ -109,7 +109,7 @@ nfpms:
         dst: /etc/pg-health-check/config.yaml
         type: "config|noreplace"
         file_info:
-          mode: 0755
+          mode: 0400
       - src: build-file/systemd-unit/pg-health-check.service
         dst: /usr/lib/systemd/system/pg-health-check.service
         type: "config"
