@@ -10,13 +10,10 @@ postgres:
 server:
   port: 8080
   host: localhost
-  # allowed
-  # debug
-  # release
-  mode: debug
+  mode: debug # debug, release set release for production
 log:
 # collector, console, syslog
-  collector: console
+  collector: stdout
   level: info
 #  syslog:
 #    host:         # syslog server host

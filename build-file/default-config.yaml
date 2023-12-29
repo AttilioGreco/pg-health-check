@@ -1,9 +1,9 @@
 ---
 postgres:
   host: localhost
-  port: 5433
-  user: postgres
-  password: postgres
+  port: 5432
+  user: pgsql_health_check_monitor
+  password: very_secret_password
   dbname: postgres
 server:
   port: 8080
