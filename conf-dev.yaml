@@ -1,6 +1,8 @@
 ---
 postgres:
   host: localhost
+  # i know, i know, the default port is 5432, on my machine for compatibility reasons i use 5433
+  # i have to bind the port 5432 to 5433
   port: 5433
   user: postgres
   password: postgres
