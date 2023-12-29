@@ -33,33 +33,6 @@ func InitDB() {
 
 	log.Debug().Str("component", "cloud/Collector").Msgf("collector configuration: %v", pgconf)
 
-	/* 	// Flag have priority over config file
-	   	tmpHost := cmd.Flag("host").Value.String()
-	   	if tmpHost != "" {
-	   		log.Warn().Msgf("Overring host from config file with %s", tmpHost)
-	   		pgconf.Host = tmpHost
-	   	}
-	   	tmpPort := cmd.Flag("port").Value.String()
-	   	if tmpPort != "" {
-	   		log.Warn().Msgf("Overring Port from config file with %s", tmpPort)
-	   		pgconf.Port = tmpPort
-	   	}
-	   	tmpUser := cmd.Flag("user").Value.String()
-	   	if tmpUser != "" {
-	   		log.Warn().Msgf("Overring User from config file with %s", tmpUser)
-	   		pgconf.User = tmpUser
-	   	}
-	   	tmpPassword := cmd.Flag("password").Value.String()
-	   	if tmpPassword != "" {
-	   		log.Warn().Msgf("Overring Password from config file with %s", tmpPassword)
-	   		pgconf.Password = tmpPassword
-	   	}
-	   	tmpDbname := cmd.Flag("dbname").Value.String()
-	   	if tmpDbname != "" {
-	   		log.Warn().Msgf("Overring Dbname from config file with %s", tmpDbname)
-	   		pgconf.Dbname = tmpDbname
-	   	} */
-
 	db_connection := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=disable pool_max_conns=10",
 		pgconf.Host,
@@ -114,9 +87,9 @@ func PgsqlCheckLoop(ctx context.Context) {
 			ticker.Stop()
 
 		case <-ticker.C:
-			log.Info().Msg("PgsqlCheckLoop running")
+			log.Trace().Msg("PgsqlCheckLoop running")
 			if !CheckDB() {
-				log.Warn().Msg("DB is not responding, exiting...")
+				log.Warn().Msg("DB is not responding, retrying conection...")
 				InitDB()
 			}
 

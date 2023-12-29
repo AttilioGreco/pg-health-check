@@ -33,8 +33,6 @@ Performs a http request to the /read endpoint to check if the database is reacha
 	Run: server.Run,
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
 	err := rootCmd.Execute()
 	if err != nil {
@@ -44,17 +42,7 @@ func Execute() {
 
 func init() {
 	cobra.OnInitialize(initConfig)
-
-	// Here you will define your flags and configuration settings.
-	// Cobra supports persistent flags, which, if defined here,
-	// will be global for your application.
-
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default is $HOME/.pgHealtchCheck.yaml)")
-	rootCmd.PersistentFlags().StringP("host", "H", "", "PostgreSQL host")
-	rootCmd.PersistentFlags().StringP("port", "p", "", "PostgreSQL port")
-	rootCmd.PersistentFlags().StringP("user", "U", "", "PostgreSQL user")
-	rootCmd.PersistentFlags().StringP("password", "w", "", "PostgreSQL password")
-	rootCmd.PersistentFlags().StringP("dbname", "d", "", "PostgreSQL dbname")
 }
 
 // initConfig reads in config file and ENV variables if set.
